@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<script>
+
+const ES256 = -7; // ECDSA w/ SHA-256
+const RS256 = -257; // RSA w/ SHA-256
+
+const algo = { name: "ECDSA", namedCurve: "P-256", hash: { name: "SHA-256" } };
+
+var userID = new Uint8Array(16); // using a fixed user id to prevent creating multiple resident credentials
+var challenge = new Uint8Array(32);
+
+var createCredentialDefaultArgs = {
+    publicKey: {
+        rp: {
+            name: "Example Relying Party"
+        },
+        user: {
+            id: userID.buffer,
+            name: "deleteMe",
+            displayName: "Some User"
+        },
+        pubKeyCredParams: [
+            { type: "public-key", alg: ES256 },
+            { type: "public-key", alg: RS256 }
+        ],
+        authenticatorSelection: {
+          requireResidentKey: true,
+          residentKey: "required",
+          authenticatorAttachment: "cross-platform",
+          //userVerification: "required"
+        },
+        excludeCredentials: [],
+        extensions: {
+          largeBlob: {
+            support: "required",
+          },
+        },
+        challenge: challenge.buffer
+    }
+};
+
+var getCredentialDefaultArgs = {
+    publicKey: {
+        challenge: challenge.buffer,
+        allowCredentials: [],
+	extensions: {
+        }
+    },
+};
+
+function create() {
+    self.crypto.getRandomValues(challenge); // generate a random challenge
+    navigator.credentials.create(createCredentialDefaultArgs).then( (cred) => {
+        createCredentialDefaultArgs.publicKey.excludeCredentials = [ {id: cred.rawId, type: "public-key"} ]; // prevent re-registration
+        getCredentialDefaultArgs.publicKey.allowCredentials = [ {id: cred.rawId, type: "public-key"} ]; // for use with credentials.get
+        const extensions = cred.getClientExtensionResults();
+        if( extensions.largeBlob )
+          document.getElementById("message").innerHTML += `<br/>credential created, largeBlob ${ extensions.largeBlob.supported ? '' : 'NOT' } supported`;
+        else
+          document.getElementById("message").innerHTML += `<br/>credential created, largeBlob not supported`;
+    }).catch((e) => {
+        document.getElementById("message").innerHTML += `<br/><b>Registration failed</b>: ${ e.message }`;
+    })
+}
+
+function read_blob() {
+    getCredentialDefaultArgs.publicKey.extensions.largeBlob = { read: true };
+    self.crypto.getRandomValues(challenge);
+    navigator.credentials.get(getCredentialDefaultArgs).then( (assertion) => {
+        createCredentialDefaultArgs.publicKey.excludeCredentials = [ {id: assertion.rawId, type: "public-key"} ]; // prevent re-registration (will overwrite)
+        getCredentialDefaultArgs.publicKey.allowCredentials = [ {id: assertion.rawId, type: "public-key"} ]; // use with subsequent credentials.get
+        // ... skipping server processing for demo purposes
+        const extensions = assertion.getClientExtensionResults();
+        if( extensions.largeBlob ) {
+          if( extensions.largeBlob.blob ) {
+            document.getElementById("message").innerHTML += `<br/>largeBlob read: ${ ab2str(extensions.largeBlob.blob) }`;
+          } else {
+            document.getElementById("message").innerHTML += `<br/>largeBlob read (no blob data stored yet)`;
+          }
+        } else {
+            document.getElementById("message").innerHTML += `<br/>largeBlob not supported`;
+        }
+    }).catch((e) => {
+        document.getElementById("message").innerHTML += `<br/><b>read failed</b>: ${ e.message }`;
+    })
+}
+
+function write_blob() {
+    if(getCredentialDefaultArgs.publicKey.allowCredentials.length != 1) { // The 'largeBlob' extension's 'write' parameter can only be used with a single credential present on 'allowCredentials'
+        document.getElementById("message").innerHTML += `<br/>Please create or read first`;
+	return;
+    }
+    getCredentialDefaultArgs.publicKey.extensions.largeBlob = { write: str2ab( document.getElementById("data").value ) };
+    self.crypto.getRandomValues(challenge);
+    navigator.credentials.get(getCredentialDefaultArgs).then( (assertion) => {
+        // ... skipping server processing for demo purposes
+        const extensions = assertion.getClientExtensionResults();
+        if( extensions.largeBlob ) {
+          document.getElementById("message").innerHTML += `<br/>largeBlob written: ${ JSON.stringify(extensions.largeBlob) }`;
+        }
+    }).catch((e) => {
+        document.getElementById("message").innerHTML += `<br/><b>write failed</b>: ${ e.message }`;
+    })
+}
+
+// ArrayBuffer to String
+function ab2str(buf) {
+    return String.fromCharCode.apply(null, new Uint8Array(buf));
+}
+
+// String to ArrayBuffer
+function str2ab(str) {
+    var buf = new ArrayBuffer(str.length); // 2 bytes for each char
+    var bufView = new Uint8Array(buf);
+    for (var i=0, strLen=str.length; i < strLen; i++) {
+        bufView[i] = str.charCodeAt(i);
+    }
+    return buf;
+}
+
+</script>
+
+<div>
+    <button id="create" onClick="create()">create</button>
+    <button id="read"   onClick="read_blob()">read</button>
+    <button id="write"  onClick="write_blob()">write</button>
+    <label for="data">largeBlob text: </label>
+    <input id="data"/>
+    <br/>
+</div>
+
+<hr/>
+
+<div id="message" class="info">
+
+largeBlob demo - write text data to your FIDO Authenticator.
+<ul>
+   <li>Use a Chromium-based browser for largeBlob support</li>
+   <li>Use a FIDO2 key that supports the <code>largeBlob</code> extension (e.g. YubiKeys with firmware v5.5+)</li>
+</ul>
+
+</div>
+
+</body>
+</html>
