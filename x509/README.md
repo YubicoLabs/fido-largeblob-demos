@@ -3,13 +3,13 @@
 FIDO is based on Public Key Cryptography. However, it does not use a Public Key Infrastructure (PKI), (except when using Device Attestation).
 Instead, FIDO uses raw keys, much like SSH does.
 
-However, it can make sense to embed public keys from FIDO credentials in traditional X.509 certificates in some cases,
-for instance when verifiers are offline and there are many verifiers leading to a key disctibution issue.
+However, it can make sense to embed public keys from FIDO credentials in traditional X.509 certificates,
+for instance when verifiers are offline and there are many verifiers leading to a key distribution issue.
 
 With a PKI, verifiers can be offline: they do not need to synchronize individual public keys.
-Instead, a CA certifies public keys and a verifier only needs a CA public key to validate a prover's certificate carying a public key.
+Instead, a Certification Authority (CA) certifies public keys and a verifier only needs a CA public key to validate a prover's certificate carying a public key.
 
-This directory contains a small Proof-of-Concept where a certificate is issues carying a FIDO credential's public key.
+This directory contains a small Proof-of-Concept where a certificate is issued carying a FIDO credential's public key.
 The certificate is stored as a largeBlob on a FIDO security key.
 
 # Prerequisites
@@ -21,7 +21,7 @@ Hardware:
 Software:
 
 - OpenSSL
-- libfido2 tools
+- [libfido2](https://developers.yubico.com/libfido2/) tools
 
 Note that the PoC code is only tested on macOS.
 
@@ -29,7 +29,7 @@ Note that the PoC code is only tested on macOS.
 
 ## Generate a CA key and CA certificate
 
-We use a very simple CA, consisting of a CA key and CA Root certificate:
+We use a very simple CA, consisting of a CA key and CA Root certificate. To generate:
 
 	openssl genpkey -algorithm EC -out cakey.pem -pkeyopt ec_paramgen_curve:P-384 -pkeyopt ec_param_enc:named_curve
 	openssl x509 -new -key cakey.pem -subj '/CN=Example CA' -extfile /path/to/openssl.cnf -extensions v3_ca -out cacert.pem
@@ -55,6 +55,13 @@ A simple script is used to retrieve the X.509 certificate from the FIDO security
 
 The scripts store a credential and a certificate on a security key. To clean up:
 
+Delete the FIDO credential:
+
+	fido2-token -D -b -n localhost ${HID}
+
+Delete the largeBlob associated with your FIDO credential:
+
+	fido2-token -D -i $(fido2-token -Lk localhost ${HID} | cut -d' ' -f2) ${HID}
 
 # Troubleshooting
 
