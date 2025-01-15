@@ -1,6 +1,7 @@
 # LargeBlob SSH certificate demo
 
 Simple demo to illustrate using largeBlobs for storing SSH certificates on a FIDO security key.
+For more information on this use-case, see also [here](https://developers.yubico.com/SSH/Storing_SSH_Certificates.html).
 
 # Prerequisites
 
@@ -10,8 +11,8 @@ To run this demo you need
 - docker, if you want to run the demo server
 - [fido2-token](https://developers.yubico.com/libfido2/Manuals/fido2-token.html), part of [libfido2](https://developers.yubico.com/libfido2/)
 - a FIDO2 security key with support for the CTAP 2.1
-  [largeBlob extension](https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorLargeBlobs),
-  such as the [YubiKey Bio](https://www.yubico.com/nl/product/yubikey-bio/),
+  [largeBlob extension](https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorLargeBlobs).
+  Any YubiKey or Security Key by Yubico with firmware version 5.5 or newer will do.
 - `make`, if you want to generate the commands to generate and destroy SSH keys and certificates automagically.
 
 # Using the Makefile
