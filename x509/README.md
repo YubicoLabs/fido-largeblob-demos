@@ -16,7 +16,7 @@ The certificate is stored as a largeBlob on a FIDO security key.
 
 Hardware:
 
-- a FIDO security key with largeBlob support. Any YubiKey with firmware version 5.6 and newer will work.
+- a FIDO security key with largeBlob support. Any YubiKey with firmware version 5.5 and newer will work.
 
 Software:
 
