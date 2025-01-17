@@ -21,9 +21,21 @@ Hardware:
 Software:
 
 - OpenSSL
+- Python
 - [libfido2](https://developers.yubico.com/libfido2/) tools
 
 Note that the PoC code is only tested on macOS.
+
+# Install
+
+This demo uses python to read the largeBlob from the security key, using the python-fido2 library.
+That library can be installed using a python VirtualEnv:
+
+```
+python3 -m venv venv
+. venv/bin/activate
+pip install fido2
+```
 
 # Running the PoC
 

@@ -11,9 +11,11 @@ echo $challenge > assert.in
 echo localhost >> assert.in
 
 echo retrieving certificate...
-fido2-token -G -b -n localhost c.der ${HID}
-# extract public key from certificate
-openssl x509 -inform der -in c.der -noout -pubkey -out pubkey.pem
+# retrieving the certificate public key can be done using fido2-token, but that always requires UV
+#fido2-token -G -b -n localhost c.der ${HID}
+#openssl x509 -inform der -in c.der -noout -pubkey -out pubkey.pem
+# therefore, use a python script using python-fido2
+python read_crt.py | openssl x509 -noout -pubkey -out pubkey.pem
 
 echo validating certificate
 openssl verify -CAfile cacert.pem cert.der
