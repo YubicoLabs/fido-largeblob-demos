@@ -61,7 +61,9 @@ The script will ask for the PIN twice: first to create a FIDO credential and the
 
 # Generate a FIDO assertion and validate the result using the X.509 certificate
 
-A simple script is used to retrieve the X.509 certificate from the FIDO security key, to generate an assertion, and to validate that assertion using the certificate.
+A simple script is used to retrieve the X.509 certificate from the FIDO security key, to generate an assertion, and to validate that assertion using the certificate:
+
+	./assert.sh
 
 # cleaning up
 
@@ -75,15 +77,16 @@ Delete the largeBlob associated with your FIDO credential:
 
 	fido2-token -D -i $(fido2-token -Lk localhost ${HID} | cut -d' ' -f2) ${HID}
 
+Note that the environment variable `HID` stands for the device ID of your security key.
+
+ To define `HID` for the first security key found:
+
+	HID="$(fido2-token -L | tail -1 | cut -d: -f1-2)"
+
 # Troubleshooting
 
 Below are some hints for troubleshooting.
 
-The environment variable `HID` stands for the device ID of your security key.
-
-To define `HID` for the first security key found:
-
-	HID="$(fido2-token -L | tail -1 | cut -d: -f1-2)"
 
 ## largeBlob support
 
@@ -93,13 +96,15 @@ To check for largeBlob support:
 
 	fido2-token -I "${HID}" | egrep -o largeBlobs
 
-	fido2-token -I "${HID}" | egrep -o -e largeBlobs -e '(no)?alwaysUv' 
-
 ## alwaysUV
 
 You may need to disable `alwaysUV` if creating assertions fail:
 
 	fido2-token -D -u $HID
+
+To check the status of your key's alwaysUV setting:
+
+	fido2-token -I "${HID}" | egrep -o -e largeBlobs -e '(no)?alwaysUv' 
 
 
 # Possible enhancements
@@ -115,7 +120,7 @@ One example would be a Physical Access Control (PAC) system where a card ID is s
 
 This PoC simply issues a certificate from a script.
 As FIDO is designed for the web, the credential can be generated using the WebAuthn API from a web page.
-Modern browsers like Chrome and Edge also support the WebAuthn largeBlob extension, meaning that the certificate can be issued only from a web page.
+Modern browsers like Chrome and Edge also support the WebAuthn largeBlob extension, meaning that the certificate can be issued from a web page.
 This is typically not possible with traditional smart cards without installing additional middleware!
 
 ## Revocation
